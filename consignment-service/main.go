@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
-	"net"
 	"sync"
 
 	// Import the generated protobuf code
 	pb "github.com/vfuntikov/shippy/consignment-service/proto/consignment"
-	"google.golang.org/grpc"
+	micro "go-micro.dev/v4"
 )
 
 const (
@@ -52,38 +52,42 @@ type service struct {
 // CreateConsignment - we created just one method on our service,
 // which is a create method, which takes a context and a request as an
 // argument, these are handled by the gRPC server.
-func (s *service) CreateConsignment(ctx context.Context, req *pb.Consignment) (*pb.Response, error) {
+func (s *service) CreateConsignment(ctx context.Context, req *pb.Consignment, res *pb.Response) error {
 	// Save our consignment
 	consignment, err := s.repo.Create(req)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	// Return matching the `Response` message we created in our
 	// protobuf definition.
-	return &pb.Response{Created: true, Consignment: consignment}, nil
+	res.Created = true
+	res.Consignment = consignment
+	return nil
 }
 
-// GetConsignments -
-func (s *service) GetConsignments(ctx context.Context, req *pb.GetRequest) (*pb.Response, error) {
+func (s *service) GetConsignments(ctx context.Context, req *pb.GetRequest, res *pb.Response) error {
 	consignments := s.repo.GetAll()
-	return &pb.Response{Consignments: consignments}, nil
+	res.Consignments = consignments
+	return nil
 }
 
 func main() {
 	repo := &Repository{}
-	// Set-up our gRPC server.
-	lis, err := net.Listen("tcp", port)
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
-	s := grpc.NewServer()
-	// Register our service with the gRPC server, this will tie our
-	// implementation into the auto-generated interface code for our
-	// protobuf definition.
-	pb.RegisterShippingServiceServer(s, &service{repo})
+
+	// Create a new service. Optionally include some options here.
+	srv := micro.NewService(
+		// This name must match the package name given in your protobuf definition
+		micro.Name("go.micro.srv.consignment"),
+	)
+	// Init will parse the command line flags.
+	srv.Init()
+
+	// Register handler
+	pb.RegisterShippingServiceHandler(srv.Server(), &service{repo})
 
 	log.Println("Running on port:", port)
-	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+	// Run the server
+	if err := srv.Run(); err != nil {
+		fmt.Println(err)
 	}
 }
