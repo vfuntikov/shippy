@@ -6,12 +6,11 @@ import (
 	"log"
 	"os"
 
-	pb "github.com/vfuntikov/shippy/consignment-service/proto/consignment"
-	"google.golang.org/grpc"
+	pb "github.com/vfuntikov/shippy/proto/consignment"
+	micro "go-micro.dev/v4"
 )
 
 const (
-	address         = "localhost:50051"
 	defaultFilename = "consignment.json"
 )
 
@@ -25,25 +24,26 @@ func parseFile(file string) (*pb.Consignment, error) {
 	return consignment, err
 }
 func main() {
-	// Set up a connection to the server.
-	conn, err := grpc.Dial(address, grpc.WithInsecure())
-	if err != nil {
-		log.Fatalf("Did not connect: %v", err)
-	}
-	defer conn.Close()
-	client := pb.NewShippingServiceClient(conn)
+	service := micro.NewService()
+	service.Init()
+
+	client := pb.NewShippingService("go.micro.srv.consignment", service.Client())
+
 	// Contact the server and print out its response.
 	file := defaultFilename
 	if len(os.Args) > 1 {
 		file = os.Args[1]
 	}
+
 	consignment, err := parseFile(file)
+
 	if err != nil {
 		log.Fatalf("Could not parse file: %v", err)
 	}
-	r, err := client.CreateConsignment(context.Background(), consignment)
+
+	r, err := client.CreateConsignment(context.TODO(), consignment)
 	if err != nil {
-		log.Fatalf("Could not greet: %v", err)
+		log.Fatalf("Could not create: %v", err)
 	}
 	log.Printf("Created: %t", r.Created)
 
