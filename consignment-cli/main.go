@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	pb "github.com/vfuntikov/shippy/proto/consignment"
+	pb "github.com/vfuntikov/shippy/consignment-service/proto/consignment"
 	micro "go-micro.dev/v4"
 )
 
