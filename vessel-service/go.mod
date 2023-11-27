@@ -1,11 +1,6 @@
-module github.com/vfuntikov/shippy/consignment-service
+module shippy/vessel-service
 
 go 1.21.4
-
-require (
-	go-micro.dev/v4 v4.10.2
-	google.golang.org/protobuf v1.31.0
-)
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
@@ -29,7 +24,6 @@ require (
 	github.com/gobwas/ws v1.3.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/uuid v1.4.0 // indirect
 	github.com/gorilla/handlers v1.5.2 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
@@ -37,7 +31,6 @@ require (
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/miekg/dns v1.1.57 // indirect
 	github.com/nxadm/tail v1.4.11 // indirect
-	github.com/onsi/gomega v1.29.0 // indirect
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pjbgf/sha1cd v0.3.0 // indirect
@@ -49,6 +42,7 @@ require (
 	github.com/vfuntikov/shippy v0.0.0-20231127072141-9d97910e1e27 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
+	go-micro.dev/v4 v4.10.2 // indirect
 	golang.org/x/crypto v0.15.0 // indirect
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/net v0.18.0 // indirect
@@ -56,6 +50,7 @@ require (
 	golang.org/x/sys v0.14.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/tools v0.15.0 // indirect
+	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )

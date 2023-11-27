@@ -1,5 +1,5 @@
 // Package acme contains all objects related the ACME endpoints.
-// https://tools.ietf.org/html/rfc8555
+// https://www.rfc-editor.org/rfc/rfc8555.html
 package acme
 
 import (
@@ -7,20 +7,38 @@ import (
 	"time"
 )
 
-// Challenge statuses.
-// https://tools.ietf.org/html/rfc8555#section-7.1.6
+// ACME status values of Account, Order, Authorization and Challenge objects.
+// See https://www.rfc-editor.org/rfc/rfc8555.html#section-7.1.6 for details.
 const (
-	StatusPending     = "pending"
-	StatusInvalid     = "invalid"
-	StatusValid       = "valid"
-	StatusProcessing  = "processing"
 	StatusDeactivated = "deactivated"
 	StatusExpired     = "expired"
+	StatusInvalid     = "invalid"
+	StatusPending     = "pending"
+	StatusProcessing  = "processing"
+	StatusReady       = "ready"
 	StatusRevoked     = "revoked"
+	StatusUnknown     = "unknown"
+	StatusValid       = "valid"
+)
+
+// CRL reason codes as defined in RFC 5280.
+// https://datatracker.ietf.org/doc/html/rfc5280#section-5.3.1
+const (
+	CRLReasonUnspecified          uint = 0
+	CRLReasonKeyCompromise        uint = 1
+	CRLReasonCACompromise         uint = 2
+	CRLReasonAffiliationChanged   uint = 3
+	CRLReasonSuperseded           uint = 4
+	CRLReasonCessationOfOperation uint = 5
+	CRLReasonCertificateHold      uint = 6
+	CRLReasonRemoveFromCRL        uint = 8
+	CRLReasonPrivilegeWithdrawn   uint = 9
+	CRLReasonAACompromise         uint = 10
 )
 
 // Directory the ACME directory object.
-// - https://tools.ietf.org/html/rfc8555#section-7.1.1
+// - https://www.rfc-editor.org/rfc/rfc8555.html#section-7.1.1
+// - https://datatracker.ietf.org/doc/draft-ietf-acme-ari/
 type Directory struct {
 	NewNonceURL   string `json:"newNonce"`
 	NewAccountURL string `json:"newAccount"`
@@ -29,10 +47,11 @@ type Directory struct {
 	RevokeCertURL string `json:"revokeCert"`
 	KeyChangeURL  string `json:"keyChange"`
 	Meta          Meta   `json:"meta"`
+	RenewalInfo   string `json:"renewalInfo"`
 }
 
 // Meta the ACME meta object (related to Directory).
-// - https://tools.ietf.org/html/rfc8555#section-7.1.1
+// - https://www.rfc-editor.org/rfc/rfc8555.html#section-7.1.1
 type Meta struct {
 	// termsOfService (optional, string):
 	// A URL identifying the current terms of service.
@@ -52,12 +71,12 @@ type Meta struct {
 
 	// externalAccountRequired (optional, boolean):
 	// If this field is present and set to "true",
-	// then the CA requires that all new- account requests include an "externalAccountBinding" field
+	// then the CA requires that all new-account requests include an "externalAccountBinding" field
 	// associating the new account with an external account.
 	ExternalAccountRequired bool `json:"externalAccountRequired"`
 }
 
-// ExtendedAccount a extended Account.
+// ExtendedAccount an extended Account.
 type ExtendedAccount struct {
 	Account
 	// Contains the value of the response header `Location`
@@ -65,14 +84,14 @@ type ExtendedAccount struct {
 }
 
 // Account the ACME account Object.
-// - https://tools.ietf.org/html/rfc8555#section-7.1.2
-// - https://tools.ietf.org/html/rfc8555#section-7.3
+// - https://www.rfc-editor.org/rfc/rfc8555.html#section-7.1.2
+// - https://www.rfc-editor.org/rfc/rfc8555.html#section-7.3
 type Account struct {
 	// status (required, string):
 	// The status of this account.
 	// Possible values are: "valid", "deactivated", and "revoked".
 	// The value "deactivated" should be used to indicate client-initiated deactivation
-	// whereas "revoked" should be used to indicate server- initiated deactivation. (See Section 7.1.6)
+	// whereas "revoked" should be used to indicate server-initiated deactivation. (See Section 7.1.6)
 	Status string `json:"status,omitempty"`
 
 	// contact (optional, array of string):
@@ -112,7 +131,7 @@ type ExtendedOrder struct {
 }
 
 // Order the ACME order Object.
-// - https://tools.ietf.org/html/rfc8555#section-7.1.3
+// - https://www.rfc-editor.org/rfc/rfc8555.html#section-7.1.3
 type Order struct {
 	// status (required, string):
 	// The status of this order.
@@ -165,7 +184,7 @@ type Order struct {
 }
 
 // Authorization the ACME authorization object.
-// - https://tools.ietf.org/html/rfc8555#section-7.1.4
+// - https://www.rfc-editor.org/rfc/rfc8555.html#section-7.1.4
 type Authorization struct {
 	// status (required, string):
 	// The status of this authorization.
@@ -207,8 +226,8 @@ type ExtendedChallenge struct {
 }
 
 // Challenge the ACME challenge object.
-// - https://tools.ietf.org/html/rfc8555#section-7.1.5
-// - https://tools.ietf.org/html/rfc8555#section-8
+// - https://www.rfc-editor.org/rfc/rfc8555.html#section-7.1.5
+// - https://www.rfc-editor.org/rfc/rfc8555.html#section-8
 type Challenge struct {
 	// type (required, string):
 	// The type of challenge encoded in the object.
@@ -241,23 +260,23 @@ type Challenge struct {
 	// It MUST NOT contain any characters outside the base64url alphabet,
 	// and MUST NOT include base64 padding characters ("=").
 	// See [RFC4086] for additional information on randomness requirements.
-	// https://tools.ietf.org/html/rfc8555#section-8.3
-	// https://tools.ietf.org/html/rfc8555#section-8.4
+	// https://www.rfc-editor.org/rfc/rfc8555.html#section-8.3
+	// https://www.rfc-editor.org/rfc/rfc8555.html#section-8.4
 	Token string `json:"token"`
 
-	// https://tools.ietf.org/html/rfc8555#section-8.1
+	// https://www.rfc-editor.org/rfc/rfc8555.html#section-8.1
 	KeyAuthorization string `json:"keyAuthorization"`
 }
 
 // Identifier the ACME identifier object.
-// - https://tools.ietf.org/html/rfc8555#section-9.7.7
+// - https://www.rfc-editor.org/rfc/rfc8555.html#section-9.7.7
 type Identifier struct {
 	Type  string `json:"type"`
 	Value string `json:"value"`
 }
 
 // CSRMessage Certificate Signing Request.
-// - https://tools.ietf.org/html/rfc8555#section-7.4
+// - https://www.rfc-editor.org/rfc/rfc8555.html#section-7.4
 type CSRMessage struct {
 	// csr (required, string):
 	// A CSR encoding the parameters for the certificate being requested [RFC2986].
@@ -267,8 +286,8 @@ type CSRMessage struct {
 }
 
 // RevokeCertMessage a certificate revocation message.
-// - https://tools.ietf.org/html/rfc8555#section-7.6
-// - https://tools.ietf.org/html/rfc5280#section-5.3.1
+// - https://www.rfc-editor.org/rfc/rfc8555.html#section-7.6
+// - https://www.rfc-editor.org/rfc/rfc5280.html#section-5.3.1
 type RevokeCertMessage struct {
 	// certificate (required, string):
 	// The certificate to be revoked, in the base64url-encoded version of the DER format.
@@ -288,4 +307,35 @@ type RevokeCertMessage struct {
 type RawCertificate struct {
 	Cert   []byte
 	Issuer []byte
+}
+
+// Window is a window of time.
+type Window struct {
+	Start time.Time `json:"start"`
+	End   time.Time `json:"end"`
+}
+
+// RenewalInfoResponse is the response to GET requests made the renewalInfo endpoint.
+// - (4.1. Getting Renewal Information) https://datatracker.ietf.org/doc/draft-ietf-acme-ari/
+type RenewalInfoResponse struct {
+	// SuggestedWindow contains two fields, start and end,
+	// whose values are timestamps which bound the window of time in which the CA recommends renewing the certificate.
+	SuggestedWindow Window `json:"suggestedWindow"`
+	//	ExplanationURL is an optional URL pointing to a page which may explain why the suggested renewal window is what it is.
+	//	For example, it may be a page explaining the CA's dynamic load-balancing strategy,
+	//	or a page documenting which certificates are affected by a mass revocation event.
+	//	Callers SHOULD provide this URL to their operator, if present.
+	ExplanationURL string `json:"explanationURL"`
+}
+
+// RenewalInfoUpdateRequest is the JWS payload for POST requests made to the renewalInfo endpoint.
+// - (4.2. Updating Renewal Information) https://datatracker.ietf.org/doc/draft-ietf-acme-ari/
+type RenewalInfoUpdateRequest struct {
+	// CertID is the base64url-encoded [RFC4648] bytes of a DER-encoded CertID ASN.1 sequence [RFC6960] with any trailing '=' characters stripped.
+	CertID string `json:"certID"`
+	// Replaced is required and indicates whether or not the client considers the certificate to have been replaced.
+	// A certificate is considered replaced when its revocation would not disrupt any ongoing services,
+	// for instance because it has been renewed and the new certificate is in use, or because it is no longer in use.
+	// Clients SHOULD NOT send a request where this value is false.
+	Replaced bool `json:"replaced"`
 }
