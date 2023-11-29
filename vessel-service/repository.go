@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	pb "github.com/vfuntikov/shippy/consignment-service/proto/consignment"
+	pb "github.com/vfuntikov/shippy/vessel-service/proto/vessel"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -39,31 +39,30 @@ func NewMongoRepository() (*MongoRepository, error) {
 	}
 	log.Println("connected to the database")
 
-	col := cl.Database("shippy").Collection("consignments")
+	col := cl.Database("shippy").Collection("vessels")
 	return &MongoRepository{client: cl, collection: col}, nil
 }
 
-// Create -
-func (repository *MongoRepository) Create(ctx context.Context, consignment *pb.Consignment) error {
-	_, err := repository.collection.InsertOne(ctx, consignment)
-	return err
-}
+// FindAvailable - checks a specification against a map of vessels,
+// if capacity and max weight are below a vessels capacity and max weight,
+// then return that vessel.
+func (repo *MongoRepository) FindAvailable(ctx context.Context, spec *pb.Specification) (*pb.Vessel, error) {
+	var vessel *pb.Vessel
 
-// GetAll -
-func (repository *MongoRepository) GetAll(ctx context.Context) ([]*pb.Consignment, error) {
-	cur, err := repository.collection.Find(ctx, bson.M{})
+	// Here we define a more complex query than our consignment-service's
+	// GetAll function. Here we're asking for a vessel who's max weight and
+	// capacity are greater than and equal to the given capacity and weight.
+	// We're also using the `One` function here as that's all we want.
+	err := repo.collection.Find(ctx, bson.M{
+		"capacity":  bson.M{"$gte": spec.Capacity},
+		"maxweight": bson.M{"$gte": spec.MaxWeight},
+	}).One(&vessel)
 	if err != nil {
 		return nil, err
 	}
-	defer cur.Close(ctx)
+	return vessel, nil
+}
 
-	var consignments []*pb.Consignment
-	for cur.Next(ctx) {
-		var consignment *pb.Consignment
-		if err := cur.Decode(&consignment); err != nil {
-			return nil, err
-		}
-		consignments = append(consignments, consignment)
-	}
-	return consignments, err
+func (repo *MongoRepository) Create(ctx context.Context, vessel *pb.Vessel) error {
+	return repo.collection.Insert(ctx, vessel)
 }
